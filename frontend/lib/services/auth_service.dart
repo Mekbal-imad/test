@@ -10,14 +10,14 @@ class AuthService {
   AuthService._internal();
 
   static String get _baseUrl {
-    if (kIsWeb) return 'https://projects4-om6u.onrender.com/api';
+    if (kIsWeb) return 'https://test-production-0baa.up.railway.app/api';
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        return 'https://projects4-om6u.onrender.com/api';
+        return 'https://test-production-0baa.up.railway.app/api';
       case TargetPlatform.iOS:
-        return 'https://projects4-om6u.onrender.com/api';
+        return 'https://test-production-0baa.up.railway.app/api';
       default:
-        return 'https://projects4-om6u.onrender.com/api';
+        return 'https://test-production-0baa.up.railway.app/api';
     }
   }
 
