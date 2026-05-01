@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:job_bit/models/job_model.dart';
 import 'package:job_bit/services/job_service.dart';
+import 'package:job_bit/utils/email_helper.dart';
 
 class JobFeedCard extends StatefulWidget {
   final Job job;
@@ -12,6 +13,21 @@ class JobFeedCard extends StatefulWidget {
 
 class _JobFeedCardState extends State<JobFeedCard> {
   final JobService _jobService = JobService();
+
+  // Helper: Choose SnackBar color based on error type
+  Color _getErrorColor(EmailContactResult result) {
+    switch (result) {
+      case EmailContactResult.noEmailProvided:
+        return Colors.orange; // Warning: no email
+      case EmailContactResult.invalidEmailFormat:
+        return Colors.orange; // Warning: bad format
+      case EmailContactResult.noEmailAppInstalled:
+        return Colors.blue; // Info: install app
+      case EmailContactResult.unknownError:
+      default:
+        return Colors.red; // Error: something went wrong
+    }
+  }
 
   Future<void> _toggleBookmark() async {
     final wasBookmarked = widget.job.isBookmarked;
@@ -99,10 +115,33 @@ class _JobFeedCardState extends State<JobFeedCard> {
               width: double.infinity,
               height: 58,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  //TODO: navigate to contact screen
+                onPressed: () async {
+                  // Call the helper and get specific result
+                  final result = await EmailHelper.contactEmployer(
+                    email: widget.job.email, // Pass nullable email directly
+                    subject: 'Job Inquiry: ${widget.job.title}',
+                    body:
+                        'Hello,\n\nI am interested in your job posting: ${widget.job.title}.\n\nPlease provide more details.\n\nThank you!',
+                  );
+
+                  // Show appropriate message based on result
+                  if (result != EmailContactResult.success && mounted) {
+                    final message = EmailHelper.getMessage(result);
+
+                    // Choose color based on error type
+                    final color = _getErrorColor(result);
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(message),
+                        backgroundColor: color,
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 4),
+                      ),
+                    );
+                  }
                 },
-                icon: const Icon(Icons.badge, size: 20),
+                icon: const Icon(Icons.email_outlined, size: 20),
                 label: const Text('Contact Employer'),
               ),
             ),

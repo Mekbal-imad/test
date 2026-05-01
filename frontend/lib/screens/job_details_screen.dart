@@ -3,6 +3,7 @@ import 'package:job_bit/models/job_model.dart';
 import 'package:job_bit/screens/auth/auth_required_screen.dart';
 import 'package:job_bit/services/auth_service.dart';
 import 'package:job_bit/services/job_service.dart';
+import 'package:job_bit/utils/email_helper.dart';
 
 class JobDetailsScreen extends StatefulWidget {
   final Job job;
@@ -14,6 +15,21 @@ class JobDetailsScreen extends StatefulWidget {
 class _JobDetailsScreenState extends State<JobDetailsScreen> {
   final AuthService _auth = AuthService();
   final JobService _jobService = JobService();
+
+  // Helper: Choose SnackBar color based on error type
+  Color _getErrorColor(EmailContactResult result) {
+    switch (result) {
+      case EmailContactResult.noEmailProvided:
+        return Colors.orange; // Warning: no email
+      case EmailContactResult.invalidEmailFormat:
+        return Colors.orange; // Warning: bad format
+      case EmailContactResult.noEmailAppInstalled:
+        return Colors.blue; // Info: install app
+      case EmailContactResult.unknownError:
+      default:
+        return Colors.red; // Error: something went wrong
+    }
+  }
 
   Future<void> _toggleBookmark() async {
     final wasBookmarked = widget.job.isBookmarked;
@@ -112,73 +128,69 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
 
             // Description
             SizedBox(
-            width: double.infinity,
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Job Description',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: cs.onSurface,
+              width: double.infinity,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Job Description',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: cs.onSurface,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      widget.job.description,
-                      style: TextStyle(
-                        color: cs.onSurface.withValues(alpha: 0.7),
-                        height: 1.5,
+                      const SizedBox(height: 12),
+                      Text(
+                        widget.job.description,
+                        style: TextStyle(
+                          color: cs.onSurface.withValues(alpha: 0.7),
+                          height: 1.5,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),),
+            ),
             const SizedBox(height: 8),
 
             // Requirements
-            SizedBox(
-              width: double.infinity,
-              child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Requirements',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: cs.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      widget.job.requirements,
-                      style: TextStyle(
-                        color: cs.onSurface.withValues(alpha: 0.7),
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),),
-            const SizedBox(height: 16),
+
 
             // Contact button
             SizedBox(
               width: double.infinity,
               height: 52,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: contact employer
+                onPressed: () async {
+                  // Call the helper and get specific result
+                  final result = await EmailHelper.contactEmployer(
+                    email: widget.job.email, // Pass nullable email directly
+                    subject: 'Job Inquiry: ${widget.job.title}',
+                    body:
+                        'Hello,\n\nI am interested in your job posting: ${widget.job.title}.\n\nPlease provide more details.\n\nThank you!',
+                  );
+
+                  // Show appropriate message based on result
+                  if (result != EmailContactResult.success && mounted) {
+                    final message = EmailHelper.getMessage(result);
+
+                    // Choose color based on error type
+                    final color = _getErrorColor(result);
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(message),
+                        backgroundColor: color,
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 4),
+                      ),
+                    );
+                  }
                 },
                 icon: const Icon(Icons.badge),
                 label: const Text('Contact Employer'),
