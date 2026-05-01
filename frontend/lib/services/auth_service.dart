@@ -2,6 +2,10 @@ import 'dart:convert';
 import 'package:job_bit/services/job_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:job_bit/services/job_service.dart';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import '../models/user_model.dart';
 
 class AuthService {
@@ -317,8 +321,21 @@ Future<String> sendPasswordResetOtp({required String email}) async {
 }
 
 Future<String> verifyOtp({required String email, required String otp}) async {
-  _lastOtp = otp;
-  return "Success";
+  try {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/verifyCode'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'code': otp}),
+    );
+    if (response.statusCode == 200) {
+      _lastOtp = otp;
+      return "Success";
+    }
+    final data = jsonDecode(response.body);
+    return data['message'] ?? 'Invalid code';
+  } catch (e) {
+    return 'Network error';
+  }
 }
 
 Future<String> resetPassword({required String email, required String newPassword}) async {

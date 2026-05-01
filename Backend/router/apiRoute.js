@@ -18,6 +18,7 @@ const updateProfile = require("../controller/updateProfile");
 const updateJob = require("../controller/UpdateJob");
 const sendChangePassword = require("../controller/sendChangePasswordCode");
 const confirmNewPassword = require("../controller/confirmNewPassword");
+const verifyCode = require("../controller/verifyCode");
 
 
 const router = express.Router();
@@ -35,6 +36,7 @@ router.put("/updateProfile", authMiddleware, updateProfile);
 router.put("/updateJob/:id", authMiddleware, updateJob);
 router.put("/sendChangePassword" , sendChangePassword);
 router.put("/confirmNewPassword" , confirmNewPassword);
+router.post("/verifyCode", verifyCode);
 router.put("/changePassword", authMiddleware, changePassword);
 
 router.delete("/deleteAccount", authMiddleware, deleteAccount);
